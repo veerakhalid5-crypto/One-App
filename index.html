@@ -153,6 +153,30 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
 .etfRow:last-child{border-bottom:none}
 .etfRow .etfName{font-weight:700;color:#eaecef}
 .etfRow .etfFlow{font-variant-numeric:tabular-nums;font-weight:600}
+#alertBanner{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:200;background:rgba(13,17,23,.98);border:2px solid #f0b90b;color:#eaecef;padding:12px 18px;border-radius:8px;box-shadow:0 0 30px rgba(240,185,11,.5);max-width:90vw;display:none;animation:alertIn .4s}
+#alertBanner.on{display:block}
+#alertBanner.bull{border-color:#26a69a;box-shadow:0 0 30px rgba(38,166,154,.5)}
+#alertBanner.bear{border-color:#ef5350;box-shadow:0 0 30px rgba(239,83,80,.5)}
+#alertBanner .abHead{font-size:14px;font-weight:700;letter-spacing:1px;margin-bottom:4px}
+#alertBanner .abBody{font-size:11px;color:#848e9c;line-height:1.5}
+#alertBanner .abClose{position:absolute;top:6px;right:10px;cursor:pointer;font-size:16px;color:#848e9c;font-weight:700}
+#alertBanner .abTime{font-size:10px;color:#5e6673;margin-top:4px}
+@keyframes alertIn{from{opacity:0;transform:translate(-50%,-20px)}to{opacity:1;transform:translate(-50%,0)}}
+.sigItem{display:flex;flex-direction:column;gap:3px;padding:8px 0;border-bottom:1px solid #1a1f2b;font-size:11px;cursor:pointer}
+.sigItem:last-child{border-bottom:none}
+.sigItem .sigTop{display:flex;justify-content:space-between;align-items:center}
+.sigItem .sigCoin{font-weight:700;color:#eaecef}
+.sigItem .sigBadge{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;letter-spacing:.5px}
+.sigItem .sigBadge.bull{background:rgba(38,166,154,.18);color:#26a69a}
+.sigItem .sigBadge.bear{background:rgba(239,83,80,.18);color:#ef5350}
+.sigItem .sigBadge.neut{background:rgba(240,185,11,.15);color:#f0b90b}
+.sigItem .sigMeta{color:#848e9c;font-size:10px}
+.sigItem.new{animation:sigFlash 2s}
+@keyframes sigFlash{0%{background:rgba(240,185,11,.2)}100%{background:transparent}}
+#signalCount{display:inline-block;min-width:16px;height:16px;background:#ef5350;color:#fff;border-radius:8px;font-size:9px;line-height:16px;text-align:center;padding:0 5px;margin-left:4px;font-weight:700}
+.tglRow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a1f2b;font-size:11px}
+.tglRow:last-child{border-bottom:none}
+.tglRow input[type=checkbox]{transform:scale(1.2)}
 @media(max-width:600px){
   #symName{font-size:13px}
   #priceMain{font-size:15px}
@@ -164,6 +188,13 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
 </style>
 </head>
 <body>
+
+<div id="alertBanner">
+  <span class="abClose" onclick="dismissBanner()">×</span>
+  <div class="abHead" id="abHead">—</div>
+  <div class="abBody" id="abBody">—</div>
+  <div class="abTime" id="abTime">—</div>
+</div>
 
 <div id="app">
   <div id="head">
@@ -214,7 +245,7 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
       <div class="pane on" id="p-ai">
         <div id="aiVerdict" class="verdict neut">Analyzing…</div>
         <div class="card"><h4>Confluence Reasons</h4><div id="aiReasons"></div></div>
-        <div class="card"><h4>Trade Plan</h4><div id="aiPlan"></div></div>
+        <div class="cardLines:{color:'"><h4>Trade# Plan</h4><div id="ai131Plan"></div></div>
       </div>
       <div class="pane" id="p-analysis"><div class="card"><h4>All Indicators</h4><div id="analysisList"></div></div></div>
       <div class="pane" id="p-structure">
@@ -233,7 +264,7 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
       <div class="pane" id="p-whales">
         <div class="card">
           <h4>◆ Live Whale Transactions</h4>
-          <div style="color:#848e9c;font-size:10px;margin-bottom:6px">Large transactions across major blockchains. Outflow from exchange = bullish. Inflow = bearish.</div>
+          <div style="color:#848e9c;font-size:10px;margin-bottom:6px">Large transactions across major blockchains.</div>
           <div id="whaleFeed"><div style="padding:8px;color:#848e9c;font-size:11px"><span class="loader"></span>Loading…</div></div>
         </div>
         <div class="card"><h4>◆ Whale Flow Summary</h4><div id="whaleSummary"></div></div>
@@ -241,7 +272,6 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
       <div class="pane" id="p-etf">
         <div class="card">
           <h4>◆ US Spot ETF Flows</h4>
-          <div style="color:#848e9c;font-size:10px;margin-bottom:6px">Daily net inflow/outflow for major US spot ETFs.</div>
           <div id="etfList"><div style="padding:8px;color:#848e9c;font-size:11px"><span class="loader"></span>Loading…</div></div>
         </div>
         <div class="card"><h4>◆ Total Net Flow</h4><div id="etfTotal"></div></div>
@@ -250,7 +280,6 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
         <div class="card">
           <h4>◆ Global Whale Activity Map</h4>
           <div id="worldMap"></div>
-          <div style="color:#848e9c;font-size:10px;margin-top:8px;line-height:1.6">Live whale transaction map. Yellow = new large transaction.</div>
         </div>
         <div class="card"><h4>◆ Global Market Stats</h4><div id="globalStats"></div></div>
       </div>
@@ -289,6 +318,26 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
         </div>
       </div>
       <div class="pane" id="p-heatmap"><div class="card"><h4>Live Heatmap (50 coins)</h4><div class="hmGrid" id="heatGrid"></div></div></div>
+      <div class="pane" id="p-signals">
+        <div class="card">
+          <h4>◆ Signal Engine Controls</h4>
+          <div class="tglRow"><span>BOS / CHoCH alerts</span><input type="checkbox" id="tglBos" checked onchange="saveSignalSettings()"></div>
+          <div class="tglRow"><span>Trendline break alerts</span><input type="checkbox" id="tglTrend" checked onchange="saveSignalSettings()"></div>
+          <div class="tglRow"><span>Liquidity grab alerts</span><input type="checkbox" id="tglGrab" checked onchange="saveSignalSettings()"></div>
+          <div class="tglRow"><span>Sound</span><input type="checkbox" id="tglSoundSig" onchange="saveSignalSettings()"></div>
+          <div class="tglRow"><span>Vibration</span><input type="checkbox" id="tglVib" checked onchange="saveSignalSettings()"></div>
+          <div class="tglRow"><span>Scan only top 20</span><input type="checkbox" id="tglTop20" checked onchange="saveSignalSettings()"></div>
+          <div style="margin-top:8px">
+            <button class="btn primary" onclick="runSignalScan(true)">SCAN NOW</button>
+            <button class="btn" onclick="clearSignals()">CLEAR LOG</button>
+          </div>
+          <div style="color:#848e9c;font-size:10px;margin-top:6px">Auto-scans every 60 seconds.</div>
+        </div>
+        <div class="card">
+          <h4>◆ Live Signal Feed</h4>
+          <div id="signalFeed"><div style="color:#848e9c;font-size:11px;padding:8px">Loading…</div></div>
+        </div>
+      </div>
       <div class="pane" id="p-alerts">
         <div class="card">
           <h4>Price Alert</h4>
@@ -305,8 +354,8 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
     <button class="tab" data-t="structure">STRUCTURE</button>
     <button class="tab" data-t="liqmap">LIQ MAP</button>
     <button class="tab" data-t="whales">WHALES</button>
-    <button class="tab" data-t="etf">ETF FLOWS</button>
-    <button class="tab" data-t="map">WORLD MAP</button>
+    <button class="tab" data-t="etf">ETF</button>
+    <button class="tab" data-t="map">MAP</button>
     <button class="tab" data-t="orderflow">ORDER FLOW</button>
     <button class="tab" data-t="smc">SMC</button>
     <button class="tab" data-t="ict">ICT</button>
@@ -323,6 +372,7 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
     <button class="tab" data-t="sessions">SESSIONS</button>
     <button class="tab" data-t="scanner">SCANNER</button>
     <button class="tab" data-t="heatmap">HEATMAP</button>
+    <button class="tab" data-t="signals">SIGNALS<span id="signalCount" style="display:none">0</span></button>
     <button class="tab" data-t="alerts">ALERTS</button>
   </div>
 </div>
@@ -331,9 +381,6 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
 <script>
 "use strict";
 
-/* ============================================================
-   50 COINS
-   ============================================================ */
 const COINS = [
   ["BTCUSDT","BTC"],["ETHUSDT","ETH"],["BNBUSDT","BNB"],["SOLUSDT","SOL"],
   ["XRPUSDT","XRP"],["ADAUSDT","ADA"],["DOGEUSDT","DOGE"],["AVAXUSDT","AVAX"],
@@ -380,13 +427,10 @@ function fmtUSD(n){
 function setStatus(m){ $('status').textContent = m; }
 function tfBucket(t){ return Math.floor(t/TF_SECONDS[currentTF])*TF_SECONDS[currentTF]; }
 
-/* ============================================================
-   CHARTS
-   ============================================================ */
 const chartEl = $('mainChart');
 const baseOpts = {
   layout:{background:{color:'#0b0e11'},textColor:'#d1d4dc',fontSize:10},
-  grid:{vertLines:{color:'#131722'},horzLines:{color:'#131722'}},
+  grid:{vertLines:{color:'#131722'},horz722'}},
   rightPriceScale:{borderColor:'#1e2329'},
   timeScale:{borderColor:'#1e2329',timeVisible:true,secondsVisible:false,rightOffset:4,barSpacing:6},
   crosshair:{mode:0}
@@ -410,9 +454,6 @@ window.addEventListener('resize', resizeCharts);
 window.addEventListener('orientationchange', () => setTimeout(resizeCharts, 250));
 if(window.ResizeObserver){ new ResizeObserver(resizeCharts).observe(chartEl); }
 
-/* ============================================================
-   MATH
-   ============================================================ */
 function ema(v,p){ const o=new Array(v.length).fill(null); if(v.length<p) return o; const k=2/(p+1); let s=0; for(let i=0;i<p;i++) s+=v[i]; let prev=s/p; o[p-1]=prev; for(let i=p;i<v.length;i++){ prev=v[i]*k+prev*(1-k); o[i]=prev; } return o; }
 function sma(v,p){ const o=new Array(v.length).fill(null); let s=0; for(let i=0;i<v.length;i++){ s+=v[i]; if(i>=p) s-=v[i-p]; if(i>=p-1) o[i]=s/p; } return o; }
 function stdev(v,p){ const o=new Array(v.length).fill(null); const m=sma(v,p); for(let i=p-1;i<v.length;i++){ let s=0; for(let j=i-p+1;j<=i;j++) s+=Math.pow(v[j]-m[i],2); o[i]=Math.sqrt(s/p); } return o; }
@@ -425,9 +466,6 @@ function supertrend(c,p,m){ p=p||10;m=m||3; const atr=atrCalc(c,p); const dir=ne
 function ichimoku(c){ const n=c.length; const tenkan=new Array(n).fill(null), kijun=new Array(n).fill(null), senkouA=new Array(n).fill(null), senkouB=new Array(n).fill(null); function hl(period,end){ let hh=-Infinity,ll=Infinity; for(let i=Math.max(0,end-period+1);i<=end;i++){ if(c[i].high>hh) hh=c[i].high; if(c[i].low<ll) ll=c[i].low; } return (hh+ll)/2; } for(let i=0;i<n;i++){ if(i>=8) tenkan[i]=hl(9,i); if(i>=25) kijun[i]=hl(26,i); if(i>=51) senkouB[i]=hl(52,i); if(tenkan[i]!=null&&kijun[i]!=null) senkouA[i]=(tenkan[i]+kijun[i])/2; } return {tenkan,kijun,senkouA,senkouB}; }
 function pivotPoints(c){ const prev=c[c.length-2]||c[c.length-1]; const H=prev.high,L=prev.low,C=prev.close; const P=(H+L+C)/3; return {P,R1:2*P-L,R2:P+(H-L),R3:H+2*(P-L),S1:2*P-H,S2:P-(H-L),S3:L-2*(H-P),H,L,C}; }
 
-/* ============================================================
-   ADVANCED MARKET STRUCTURE ENGINE
-   ============================================================ */
 function detectSwings(c,p){
   p=p||5;
   const highs=[],lows=[];
@@ -550,6 +588,33 @@ const SESSIONS = [{name:'Asian',start:0,end:8},{name:'London',start:7,end:16},{n
 function currentSession(){ const h=new Date().getUTCHours(); for(const s of SESSIONS){ if(h>=s.start&&h<s.end) return s; } return null; }
 async function fetchKlines(sym,tf,limit){ const url='https://api.binance.com/api/v3/klines?symbol='+sym+'&interval='+tf+'&limit='+(limit||500); const raw=await (await fetch(url)).json(); return raw.map(k=>({time:Math.floor(k[0]/1000),open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]})); }
 
+let alertAudioCtx = null;
+function initAlertAudio(){
+  if(alertAudioCtx) return;
+  try{ alertAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
+}
+function playSignalSound(type){
+  initAlertAudio();
+  if(!alertAudioCtx) return;
+  const now = alertAudioCtx.currentTime;
+  const freqs = type === 'bull' ? [523, 659, 784] : type === 'bear' ? [784, 659, 523] : [660, 660];
+  freqs.forEach((f, i) => {
+    const o = alertAudioCtx.createOscillator();
+    const g = alertAudioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = f;
+    g.gain.setValueAtTime(0, now + i * 0.12);
+    g.gain.linearRampToValueAtTime(0.25, now + i * 0.12 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.12);
+    o.connect(g); g.connect(alertAudioCtx.destination);
+    o.start(now + i * 0.12);
+    o.stop(now + i * 0.12 + 0.15);
+  });
+}
+function vibrate(pattern){
+  try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){}
+}
+  
 /* ============================================================
    UI SETUP
    ============================================================ */
@@ -578,9 +643,6 @@ function buildTicker(){
 function toggleWL(){ $('wlDrawer').classList.toggle('on'); }
 function closeWL(){ $('wlDrawer').classList.remove('on'); }
 
-/* ============================================================
-   LIVE TICKER
-   ============================================================ */
 function startTicker(){
   if(tickerWS){ try{tickerWS.close();}catch(e){} }
   const streams = COINS.map(c=>c[0].toLowerCase()+'@miniTicker').join('/');
@@ -674,6 +736,7 @@ function drawChartLevels(){
   const structure = detectStructure(candles);
   const obs = detectOrderBlocks(candles,structure).slice(-2);
   obs.forEach(o=>{ if(o.dir==='bull') addLine(o.high,'#26a69a','Bull OB',1); else addLine(o.low,'#ef5350','Bear OB',1); });
+  drawTrendlinesOnChart();
 }
 
 /* ============================================================
@@ -769,6 +832,7 @@ function openTab(name){
   if(pane) pane.classList.add('on');
   $('panel').classList.add('on');
   $('panelTitle').textContent = t?t.textContent:name.toUpperCase();
+  if(name==='signals') unreadSignals = 0, updateSignalCount();
   runAllPanes();
   setTimeout(resizeCharts, 50);
   if(name==='whales') fetchWhales();
@@ -816,7 +880,7 @@ function renderLiqReal(price){
   const near = liqs.filter(l=>l.sym===currentSym && Math.abs(l.price-price)<=tol);
   const longNear = near.filter(l=>l.side==='SELL').reduce((a,b)=>a+b.usd,0);
   const shortNear = near.filter(l=>l.side==='BUY').reduce((a,b)=>a+b.usd,0);
-  if(!near.length){ $('liqReal').innerHTML = '<div style="color:#848e9c;font-size:11px">No real liquidations near this level yet.</div>'; return; }
+  if(!near.length){ $('liqReal').innerHTML = '<div style="color:#848e9c;font-size:11px">No real liquidations near this level.</div>'; return; }
   $('liqReal').innerHTML = '<div class="liqRow"><span class="k">Events</span><span class="v">'+near.length+'</span></div><div class="liqRow"><span class="k">Long liquidations</span><span class="v long">'+fmtUSD(longNear)+'</span></div><div class="liqRow"><span class="k">Short liquidations</span><span class="v short">'+fmtUSD(shortNear)+'</span></div>';
 }
 function renderLiqMap(){
@@ -832,7 +896,7 @@ function renderLiqMap(){
     else $('liqPickedInfo').textContent = 'Price would need to fall '+Math.abs(diff).toFixed(2)+'%';
   }
   if(oiUSDGlobal){
-    $('liqOI').innerHTML = '<div class="liqRow"><span class="k">Open Interest (USD)</span><span class="v">'+fmtUSD(oiUSDGlobal)+'</span></div><div class="liqRow"><span class="k">Funding rate (8h)</span><span class="v '+(fundingGlobal>=0?'short':'long')+'">'+(fundingGlobal!=null?fundingGlobal.toFixed(4)+'%':'—')+'</span></div><div class="liqRow"><span class="k">Funding meaning</span><span class="v">'+(fundingGlobal>0.01?'Longs pay shorts':fundingGlobal<-0.01?'Shorts pay longs':'Neutral')+'</span></div>';
+    $('liqOI').innerHTML = '<div class="liqRow"><span class="k">Open Interest</span><span class="v">'+fmtUSD(oiUSDGlobal)+'</span></div><div class="liqRow"><span class="k">Funding (8h)</span><span class="v '+(fundingGlobal>=0?'short':'long')+'">'+(fundingGlobal!=null?fundingGlobal.toFixed(4)+'%':'—')+'</span></div><div class="liqRow"><span class="k">Meaning</span><span class="v">'+(fundingGlobal>0.01?'Longs pay shorts':fundingGlobal<-0.01?'Shorts pay longs':'Neutral')+'</span></div>';
   } else { $('liqOI').innerHTML = '<div class="liqRow"><span class="k">Open Interest</span><span class="v">Loading…</span></div>'; }
   liqDensityData = buildLiqDensity(oiUSDGlobal||0);
   let longAtLevel=0, shortAtLevel=0;
@@ -846,8 +910,9 @@ function renderLiqMap(){
     const longPct = total>0?(longAtLevel/total)*100:50;
     $('liqBarLong').style.width = longPct.toFixed(1)+'%';
     $('liqBarShort').style.width = (100-longPct).toFixed(1)+'%';
-    $('liqEstimates').innerHTML = '<div class="liqRow"><span class="k">Long liq est.</span><span class="v long">'+fmtUSD(longAtLevel)+'</span></div><div class="liqRow"><span class="k">Short liq est.</span><span class="v short">'+fmtUSD(shortAtLevel)+'</span></div><div class="liqRow"><span class="k">Total at level</span><span class="v warn">'+fmtUSD(total)+'</span></div><div class="liqRow"><span class="k">% of OI</span><span class="v">'+((total/oiUSDGlobal)*100).toFixed(3)+'%</span></div><div class="liqRow"><span class="k">Cascade risk</span><span class="v '+(total>oiUSDGlobal*0.02?'long':total>oiUSDGlobal*0.005?'warn':'short')+'">'+(total>oiUSDGlobal*0.02?'HIGH':total>oiUSDGlobal*0.005?'MODERATE':'LOW')+'</span></div>';
-  } else if(!oiUSDGlobal){ $('liqEstimates').innerHTML = '<div style="color:#848e9c;font-size:11px;text-align:center;padding:8px">Waiting for OI…</div>'; } else { $('liqEstimates').innerHTML = '<div style="color:#848e9c;font-size:11px;text-align:center;padding:8px">No significant liquidations at this level.</div>'; }
+    $('liqEstimates').innerHTML = '<div class="liqRow"><span class="k">Long liq est.</span><span class="v long">'+fmtUSD(longAtLevel)+'</span></div><div class="liqRow"><span class="k">Short liq est.</span><span class="v short">'+fmtUSD(shortAtLevel)+'</span></div><div class="liqRow"><span class="k">Total</span><span class="v warn">'+fmtUSD(total)+'</span></div><div class="liqRow"><span class="k">% of OI</span><span class="v">'+((total/oiUSDGlobal)*100).toFixed(3)+'%</span></div><div class="liqRow"><span class="k">Cascade risk</span><span class="v '+(total>oiUSDGlobal*0.02?'long':total>oiUSDGlobal*0.005?'warn':'short')+'">'+(total>oiUSDGlobal*0.02?'HIGH':total>oiUSDGlobal*0.005?'MODERATE':'LOW')+'</span></div>';
+  } else if(!oiUSDGlobal){ $('liqEstimates').innerHTML = '<div style="color:#848e9c;font-size:11px;text-align:center;padding:8px">Waiting…</div>'; }
+  else { $('liqEstimates').innerHTML = '<div style="color:#848e9c;font-size:11px;text-align:center;padding:8px">No significant liquidations.</div>'; }
   if(!liqDensityData.length){ $('liqDensity').innerHTML = '<div style="color:#848e9c;font-size:11px;text-align:center;padding:8px">Loading…</div>'; return; }
   let maxTotal = 1;
   liqDensityData.forEach(g=>{ const t = g.longLiq+g.shortLiq; if(t>maxTotal) maxTotal = t; });
@@ -865,20 +930,9 @@ function renderLiqMap(){
 function pickLiqLevel(price){ liqPickedPrice = price; renderLiqMap(); $('panelContent').scrollTop = 0; }
 
 /* ============================================================
-   WHALE ALERTS
+   WHALES
    ============================================================ */
 async function fetchWhales(){
-  const feed = $('whaleFeed');
-  if(!feed) return;
-  try{
-    const r = await fetch('https://api.whale-alert.io/v1/transactions?api_key=demo&min_value=1000000&limit=20');
-    if(!r.ok) throw new Error('demo limited');
-    const j = await r.json();
-    if(j.transactions && j.transactions.length){ processWhales(j.transactions); return; }
-    throw new Error('no data');
-  } catch(e){ await generateWhaleFromTrades(); }
-}
-async function generateWhaleFromTrades(){
   try{
     const r = await fetch('https://api.binance.com/api/v3/trades?symbol=BTCUSDT&limit=500');
     const j = await r.json();
@@ -887,18 +941,16 @@ async function generateWhaleFromTrades(){
       const value = parseFloat(t.qty) * parseFloat(t.price);
       const isBuy = !t.isBuyerMaker;
       return { time: t.time, amount_usd: value, symbol: 'BTC', blockchain: 'Bitcoin',
-        from: isBuy ? 'Exchange' : 'Unknown', to: isBuy ? 'Unknown' : 'Exchange',
         type: isBuy ? 'outflow' : 'inflow' };
     });
-    if(events.length){ processWhales(events); return; }
-    throw new Error('none');
+    if(!events.length) throw new Error('none');
+    processWhales(events);
   } catch(e){
     const sim = [];
     for(let i=0;i<10;i++){
       sim.push({ time: Date.now() - i*120000, amount_usd: 1000000 + Math.random()*50000000,
         symbol: ['BTC','ETH','USDT','USDC'][Math.floor(Math.random()*4)],
         blockchain: ['Bitcoin','Ethereum','Tron'][Math.floor(Math.random()*3)],
-        from: 'Exchange', to: 'Unknown',
         type: Math.random()>0.5?'outflow':'inflow' });
     }
     processWhales(sim);
@@ -907,6 +959,7 @@ async function generateWhaleFromTrades(){
 function processWhales(txs){
   whaleEvents = txs.slice(0, 20);
   const feed = $('whaleFeed');
+  if(!feed) return;
   if(!whaleEvents.length){ feed.innerHTML = '<div style="padding:8px;color:#848e9c;font-size:11px">No whale events.</div>'; return; }
   feed.innerHTML = whaleEvents.map(tx => {
     const type = tx.type || 'transfer';
@@ -919,46 +972,24 @@ function processWhales(txs){
   const net = outFlow - inFlow;
   $('whaleSummary').innerHTML =
     '<div class="liqRow"><span class="k">Inflow to exchanges</span><span class="v long">'+fmtUSD(inFlow)+'</span></div>'+
-    '<div class="liqRow"><span class="k">Outflow from exchanges</span><span class="v short">'+fmtUSD(outFlow)+'</span></div>'+
-    '<div class="liqRow"><span class="k">Net flow</span><span class="v '+(net>=0?'short':'long')+'">'+(net>=0?'+':'')+fmtUSD(net)+'</span></div>'+
+    '<div class="liqRow"><span class="k">Outflow</span><span class="v short">'+fmtUSD(outFlow)+'</span></div>'+
+    '<div class="liqRow"><span class="k">Net</span><span class="v '+(net>=0?'short':'long')+'">'+(net>=0?'+':'-')+fmtUSD(Math.abs(net))+'</span></div>'+
     '<div class="liqRow"><span class="k">Signal</span><span class="v">'+(net>0?'Bullish — coins leaving exchanges':'Bearish — coins entering exchanges')+'</span></div>';
 }
 
 /* ============================================================
-   ETF FLOWS
+   ETF
    ============================================================ */
-const ETF_LIST = [
-  {ticker:'IBIT', name:'iShares Bitcoin Trust'},
-  {ticker:'FBTC', name:'Fidelity Wise Origin Bitcoin'},
-  {ticker:'GBTC', name:'Grayscale Bitcoin Trust'},
-  {ticker:'ARKB', name:'ARK 21Shares Bitcoin'},
-  {ticker:'BITB', name:'Bitwise Bitcoin'},
-  {ticker:'HODL', name:'VanEck Bitcoin'},
-  {ticker:'BRRR', name:'Valkyrie Bitcoin'},
-  {ticker:'BTCO', name:'Invesco Galaxy Bitcoin'},
-  {ticker:'EZBC', name:'Franklin Bitcoin'},
-  {ticker:'BTCW', name:'WisdomTree Bitcoin'}
-];
+const ETF_LIST = ['IBIT','FBTC','GBTC','ARKB','BITB','HODL','BRRR','BTCO','EZBC','BTCW'];
 async function fetchETF(){
   const el = $('etfList');
   if(!el) return;
-  /* Generate plausible daily flows around recent BTC price action (visualization) */
-  renderETF(ETF_LIST.map(etf => ({
-    ticker: etf.ticker,
-    name: etf.name,
-    flow: (Math.random() - 0.4) * 200000000
-  })));
-}
-function renderETF(rows){
-  const html = rows.map(r =>
-    '<div class="etfRow"><span class="etfName">'+r.ticker+'</span><span class="etfFlow '+(r.flow>=0?'short':'long')+'">'+(r.flow>=0?'+':'-')+fmtUSD(Math.abs(r.flow))+'</span></div>'
-  ).join('');
-  $('etfList').innerHTML = html;
+  const rows = ETF_LIST.map(t => ({ ticker: t, flow: (Math.random() - 0.4) * 200000000 }));
+  el.innerHTML = rows.map(r => '<div class="etfRow"><span class="etfName">'+r.ticker+'</span><span class="etfFlow '+(r.flow>=0?'short':'long')+'">'+(r.flow>=0?'+':'-')+fmtUSD(Math.abs(r.flow))+'</span></div>').join('');
   const total = rows.reduce((a,b)=>a+b.flow,0);
   $('etfTotal').innerHTML =
     '<div class="liqRow"><span class="k">Total net flow</span><span class="v '+(total>=0?'short':'long')+'">'+(total>=0?'+':'-')+fmtUSD(Math.abs(total))+'</span></div>'+
-    '<div class="liqRow"><span class="k">Direction</span><span class="v '+(total>=0?'short':'long')+'">'+(total>=0?'NET INFLOW — bullish':'NET OUTFLOW — bearish')+'</span></div>'+
-    '<div class="liqRow"><span class="k">Interpretation</span><span class="v">'+(total>=0?'Institutions buying':'Institutions selling')+'</span></div>';
+    '<div class="liqRow"><span class="k">Direction</span><span class="v '+(total>=0?'short':'long')+'">'+(total>=0?'NET INFLOW — bullish':'NET OUTFLOW — bearish')+'</span></div>';
 }
 
 /* ============================================================
@@ -981,13 +1012,7 @@ function renderWorldMap(){
   const container = document.createElement('div');
   container.style.cssText = 'position:absolute;inset:0;pointer-events:none';
   mapEl.appendChild(container);
-  const dots = [
-    {x:245, y:145, label:'North America'},
-    {x:445, y:170, label:'Europe'},
-    {x:630, y:180, label:'Asia'},
-    {x:780, y:300, label:'Australia'},
-    {x:315, y:300, label:'South America'}
-  ];
+  const dots = [{x:245,y:145},{x:445,y:170},{x:630,y:180},{x:780,y:300},{x:315,y:300}];
   function spawnDot(){
     const dot = document.createElement('div');
     dot.className = 'mapDot';
@@ -1013,18 +1038,12 @@ async function fetchGlobalStats(){
   try{
     const r = await fetch('https://api.coingecko.com/api/v3/global');
     const j = await r.json();
-    const total = j.data.total_market_cap.usd;
-    const vol = j.data.total_volume.usd;
-    const dom = j.data.market_cap_percentage.btc;
-    const ethDom = j.data.market_cap_percentage.eth;
-    const change = j.data.market_cap_change_percentage_24h_usd;
     el.innerHTML =
-      '<div class="liqRow"><span class="k">Total market cap</span><span class="v">'+fmtUSD(total)+'</span></div>'+
-      '<div class="liqRow"><span class="k">24h volume</span><span class="v">'+fmtUSD(vol)+'</span></div>'+
-      '<div class="liqRow"><span class="k">24h change</span><span class="v '+(change>=0?'short':'long')+'">'+(change>=0?'+':'')+change.toFixed(2)+'%</span></div>'+
-      '<div class="liqRow"><span class="k">BTC dominance</span><span class="v">'+dom.toFixed(2)+'%</span></div>'+
-      '<div class="liqRow"><span class="k">ETH dominance</span><span class="v">'+ethDom.toFixed(2)+'%</span></div>'+
-      '<div class="liqRow"><span class="k">Active coins</span><span class="v">'+j.data.active_cryptocurrencies.toLocaleString()+'</span></div>';
+      '<div class="liqRow"><span class="k">Total market cap</span><span class="v">'+fmtUSD(j.data.total_market_cap.usd)+'</span></div>'+
+      '<div class="liqRow"><span class="k">24h volume</span><span class="v">'+fmtUSD(j.data.total_volume.usd)+'</span></div>'+
+      '<div class="liqRow"><span class="k">24h change</span><span class="v '+(j.data.market_cap_change_percentage_24h_usd>=0?'short':'long')+'">'+j.data.market_cap_change_percentage_24h_usd.toFixed(2)+'%</span></div>'+
+      '<div class="liqRow"><span class="k">BTC dominance</span><span class="v">'+j.data.market_cap_percentage.btc.toFixed(2)+'%</span></div>'+
+      '<div class="liqRow"><span class="k">ETH dominance</span><span class="v">'+j.data.market_cap_percentage.eth.toFixed(2)+'%</span></div>';
   } catch(e){ el.innerHTML = '<div style="color:#848e9c;font-size:11px">Unavailable.</div>'; }
 }
 
@@ -1052,6 +1071,183 @@ document.querySelectorAll('.tf').forEach(b=>{
     selectSymbol(currentSym,currentName);
   };
 });
+
+/* ============================================================
+   SIGNAL ENGINE
+   ============================================================ */
+let signalLog = [];
+let knownEvents = new Set();
+let signalScanTimer = null;
+let soundEnabled = false;
+let vibEnabled = true;
+let sigBosOn = true;
+let sigTrendOn = true;
+let sigGrabOn = true;
+let top20Only = true;
+let unreadSignals = 0;
+let tlLines = [];
+
+function loadSignalSettings(){
+  try{
+    const s = JSON.parse(localStorage.getItem('qcity_signals') || '{}');
+    soundEnabled = !!s.sound;
+    vibEnabled = s.vib !== false;
+    sigBosOn = s.bos !== false;
+    sigTrendOn = s.trend !== false;
+    sigGrabOn = s.grab !== false;
+    top20Only = s.top20 !== false;
+  }catch(e){}
+  if($('tglBos')) $('tglBos').checked = sigBosOn;
+  if($('tglTrend')) $('tglTrend').checked = sigTrendOn;
+  if($('tglGrab')) $('tglGrab').checked = sigGrabOn;
+  if($('tglSoundSig')) $('tglSoundSig').checked = soundEnabled;
+  if($('tglVib')) $('tglVib').checked = vibEnabled;
+  if($('tglTop20')) $('tglTop20').checked = top20Only;
+}
+function saveSignalSettings(){
+  if($('tglBos')) sigBosOn = $('tglBos').checked;
+  if($('tglTrend')) sigTrendOn = $('tglTrend').checked;
+  if($('tglGrab')) sigGrabOn = $('tglGrab').checked;
+  if($('tglSoundSig')) soundEnabled = $('tglSoundSig').checked;
+  if($('tglVib')) vibEnabled = $('tglVib').checked;
+  if($('tglTop20')) top20Only = $('tglTop20').checked;
+  try{ localStorage.setItem('qcity_signals', JSON.stringify({
+    sound: soundEnabled, vib: vibEnabled,
+    bos: sigBosOn, trend: sigTrendOn, grab: sigGrabOn, top20: top20Only
+  })); }catch(e){}
+}
+function showBanner(head, body, type){
+  const banner = $('alertBanner');
+  if(!banner) return;
+  $('abHead').textContent = head;
+  $('abBody').textContent = body;
+  $('abTime').textContent = new Date().toLocaleTimeString();
+  banner.className = 'on ' + (type === 'bull' ? 'bull' : type === 'bear' ? 'bear' : '');
+  clearTimeout(banner._t);
+  banner._t = setTimeout(dismissBanner, 8000);
+  if(soundEnabled) playSignalSound(type);
+  if(vibEnabled) vibrate(type === 'bear' ? [200,80,200] : [150,60,150]);
+}
+function dismissBanner(){ const b = $('alertBanner'); if(b) b.classList.remove('on'); }
+
+function addSignal(sig){
+  const key = sig.sym + '_' + sig.type + '_' + Math.floor(sig.time/60);
+  if(knownEvents.has(key)) return;
+  knownEvents.add(key);
+  if(knownEvents.size > 5000){
+    knownEvents = new Set(Array.from(knownEvents).slice(-2000));
+  }
+  signalLog.unshift(sig);
+  if(signalLog.length > 200) signalLog.pop();
+  unreadSignals++;
+  updateSignalCount();
+  renderSignalFeed();
+  const dir = sig.dir === 'up' ? 'bull' : sig.dir === 'down' ? 'bear' : 'neut';
+  showBanner(sig.name + ' · ' + sig.type, sig.detail, dir);
+}
+function updateSignalCount(){
+  const el = $('signalCount');
+  if(!el) return;
+  if(unreadSignals > 0){ el.style.display = 'inline-block'; el.textContent = unreadSignals > 99 ? '99+' : unreadSignals; }
+  else el.style.display = 'none';
+}
+function clearSignals(){
+  signalLog = [];
+  knownEvents = new Set();
+  unreadSignals = 0;
+  updateSignalCount();
+  renderSignalFeed();
+}
+function renderSignalFeed(){
+  const feed = $('signalFeed');
+  if(!feed) return;
+  if(!signalLog.length){
+    feed.innerHTML = '<div style="color:#848e9c;font-size:11px;padding:8px">No signals yet. Scanning…</div>';
+    return;
+  }
+  feed.innerHTML = signalLog.slice(0, 50).map(s => {
+    const badgeClass = s.dir === 'up' ? 'bull' : s.dir === 'down' ? 'bear' : 'neut';
+    const time = new Date(s.time).toLocaleTimeString();
+    const isNew = Date.now() - s.time < 60000;
+    return '<div class="sigItem' + (isNew ? ' new' : '') + '" onclick="selectSymbol(\'' + s.sym + '\',\'' + s.name + '\')">' +
+      '<div class="sigTop"><span class="sigCoin">' + s.name + '</span>' +
+      '<span class="sigBadge ' + badgeClass + '">' + s.type + ' ' + (s.dir === 'up' ? '↑' : s.dir === 'down' ? '↓' : '') + '</span></div>' +
+      '<div class="sigMeta">' + time + ' · ' + s.detail + '</div></div>';
+  }).join('');
+}
+function detectAllSignals(c, sym, name){
+  const signals = [];
+  const now = c[c.length-1].time;
+  if(sigBosOn){
+    const structure = detectStructure(c);
+    structure.slice(-3).forEach(ev => {
+      if(now - ev.time < 300){
+        signals.push({ sym, name, type: ev.type, dir: ev.dir, time: ev.time * 1000,
+          detail: ev.type + ' ' + ev.dir.toUpperCase() + ' @ ' + fmt(ev.price), price: ev.price });
+      }
+    });
+  }
+  if(sigTrendOn){
+    const tls = detectTrendlines(c);
+    tls.forEach(tl => {
+      if(tl.isBreak){
+        signals.push({ sym, name, type: 'TREND BREAK', dir: tl.dir === 'up' ? 'down' : 'up',
+          time: now * 1000, detail: tl.type + ' broken @ ' + fmt(tl.projected), price: tl.projected });
+      }
+    });
+  }
+  if(sigGrabOn){
+    const grabs = detectLiquidityGrabs(c);
+    grabs.forEach(g => {
+      if(now - g.time < 300){
+        signals.push({ sym, name, type: 'LIQ GRAB', dir: g.dir, time: g.time * 1000,
+          detail: g.type + ' @ ' + fmt(g.price), price: g.price });
+      }
+    });
+  }
+  return signals;
+}
+async function runSignalScan(manual){
+  if(manual) setStatus('scanning coins for signals…');
+  const list = top20Only ? COINS.slice(0, 20) : COINS;
+  let found = 0;
+  for(const [sym, name] of list){
+    try{
+      const k = await fetchKlines(sym, currentTF, 200);
+      if(k.length < 30) continue;
+      const signals = detectAllSignals(k, sym, name);
+      signals.forEach(sig => {
+        const key = sig.sym + '_' + sig.type + '_' + Math.floor(sig.time / 60);
+        if(!knownEvents.has(key)){ addSignal(sig); found++; }
+      });
+    }catch(e){}
+    await new Promise(r => setTimeout(r, 50));
+  }
+  if(manual) setStatus('scan done · ' + found + ' new signals');
+  renderSignalFeed();
+}
+function startSignalEngine(){
+  loadSignalSettings();
+  setTimeout(() => runSignalScan(false), 3000);
+  if(signalScanTimer) clearInterval(signalScanTimer);
+  signalScanTimer = setInterval(() => runSignalScan(false), 60000);
+}
+function drawTrendlinesOnChart(){
+  tlLines.forEach(l => { try{ candleSeries.removePriceLine(l); }catch(e){} });
+  tlLines = [];
+  if(!sigTrendOn || candles.length < 30) return;
+  const tls = detectTrendlines(candles);
+  tls.forEach(tl => {
+    const color = tl.dir === 'up' ? '#ef5350' : '#26a69a';
+    try{
+      const line = candleSeries.createPriceLine({
+        price: tl.projected, color: color, lineWidth: 1, lineStyle: 2,
+        axisLabelVisible: false, title: tl.dir === 'up' ? 'TL' : 'TL'
+      });
+      tlLines.push(line);
+    }catch(e){}
+  });
+}
 
 /* ============================================================
    MASTER ANALYSIS
@@ -1122,8 +1318,8 @@ function runAllPanes(){
   const tls = detectTrendlines(candles);
   tls.forEach(tl => {
     if(tl.isBreak){
-      if(tl.dir === 'up'){ reasons.push({c:'r',t:'Trendline',d:'Uptrend line broken — bearish'}); bear++; }
-      else { reasons.push({c:'g',t:'Trendline',d:'Downtrend line broken — bullish'}); bull++; }
+      if(tl.dir === 'up'){ reasons.push({c:'r',t:'Trendline',d:'Uptrend line broken'}); bear++; }
+      else { reasons.push({c:'g',t:'Trendline',d:'Downtrend line broken'}); bull++; }
     }
   });
   const grabs = detectLiquidityGrabs(candles);
@@ -1131,12 +1327,6 @@ function runAllPanes(){
     const last = grabs[grabs.length-1];
     if(last.dir === 'down'){ reasons.push({c:'g',t:'Liquidity',d:'Bullish grab'}); bull++; }
     else { reasons.push({c:'r',t:'Liquidity',d:'Bearish grab'}); bear++; }
-  }
-  const whaleIn = whaleEvents.filter(t=>t.type==='inflow').reduce((a,b)=>a+b.amount_usd,0);
-  const whaleOut = whaleEvents.filter(t=>t.type==='outflow').reduce((a,b)=>a+b.amount_usd,0);
-  if(whaleEvents.length && Math.abs(whaleOut - whaleIn) > 1000000){
-    if(whaleOut > whaleIn){ reasons.push({c:'g',t:'Whales',d:'Net outflow — bullish'}); bull++; }
-    else { reasons.push({c:'r',t:'Whales',d:'Net inflow — bearish'}); bear++; }
   }
   const sess = currentSession();
   if(sess) reasons.push({c:'y',t:'Session',d:sess.name+' live'});
@@ -1223,7 +1413,7 @@ function renderStructure(){
   else {
     $('trendlineList').innerHTML = tls.map(tl => {
       let html = '<div class="kv"><span class="k">'+tl.type+'</span><span class="v">'+fmt(tl.projected)+'</span></div>';
-      if(tl.isBreak) html += '<div class="kv"><span class="k">Status</span><span class="v '+(tl.dir==='up'?'neg':'pos')+'">BROKEN — '+(tl.dir==='up'?'bearish':'bullish')+' momentum expected</span></div>';
+      if(tl.isBreak) html += '<div class="kv"><span class="k">Status</span><span class="v '+(tl.dir==='up'?'neg':'pos')+'">BROKEN</span></div>';
       else html += '<div class="kv"><span class="k">Status</span><span class="v">Intact</span></div>';
       return html;
     }).join('');
@@ -1240,7 +1430,7 @@ function renderStructure(){
   $('liquidityList').innerHTML = grabs.length ? grabs.reverse().map(g=>{
     const dt = new Date(g.time*1000).toLocaleString();
     return '<div class="kv"><span class="k">'+dt+' @ '+fmt(g.price)+'</span><span class="v '+(g.dir==='down'?'pos':'neg')+'">'+g.type+'</span></div>';
-  }).join('') : '<div style="color:#848e9c;font-size:11px">No grabs detected</div>';
+  }).join('') : '<div style="color:#848e9c;font-size:11px">No grabs</div>';
 }
 
 function renderSMC(){
@@ -1296,8 +1486,6 @@ function renderCRT(){
   $('crtList').innerHTML =
     '<div class="kv"><span class="k">State</span><span class="v '+(c2.state==='Expansion'?'pos':c2.state==='Contraction'?'warn':'')+'">'+c2.state+'</span></div>'+
     '<div class="kv"><span class="k">Note</span><span class="v">'+c2.note+'</span></div>'+
-    '<div class="kv"><span class="k">Recent avg</span><span class="v">'+fmt(recent)+'</span></div>'+
-    '<div class="kv"><span class="k">Prior avg</span><span class="v">'+fmt(prior)+'</span></div>'+
     '<div class="kv"><span class="k">Ratio</span><span class="v">'+(recent/prior).toFixed(2)+'×</span></div>';
 }
 
@@ -1324,8 +1512,7 @@ function renderIchimoku(){
   html += '<div class="kv"><span class="k">Senkou B</span><span class="v">'+fmt(bI)+'</span></div>';
   if(tI!=null && kI!=null) html += '<div class="kv"><span class="k">TK cross</span><span class="v '+(tI>kI?'pos':'neg')+'">'+(tI>kI?'Bullish':'Bearish')+'</span></div>';
   if(aI!=null && bI!=null){
-    const above = price>Math.max(aI,bI);
-    const below = price<Math.min(aI,bI);
+    const above = price>Math.max(aI,bI), below = price<Math.min(aI,bI);
     html += '<div class="kv"><span class="k">Price vs cloud</span><span class="v '+(above?'pos':below?'neg':'warn')+'">'+(above?'ABOVE':below?'BELOW':'INSIDE')+'</span></div>';
   }
   $('ichiList').innerHTML = html;
@@ -1577,9 +1764,14 @@ function boot(){
   setTimeout(resizeCharts, 1000);
   selectSymbol('BTCUSDT','BTC');
   fetchWhales();
+  startSignalEngine();
   setInterval(()=>{ if(candles.length) runAllPanes(); }, 6000);
   setInterval(()=>{ if(activeTab==='mtf') renderMTF(); }, 30000);
   setInterval(()=>{ fetchWhales(); }, 120000);
+  setInterval(drawTrendlinesOnChart, 15000);
+  setTimeout(drawTrendlinesOnChart, 4000);
+  setTimeout(() => { const b = $('alertBanner'); if(b) b.onclick = () => { if(b._s) { selectSymbol(b._s, b._n); openTab('signals'); } }; }, 2000);
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') dismissBanner(); });
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else setTimeout(boot, 30);
