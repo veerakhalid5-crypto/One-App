@@ -137,10 +137,6 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
 .tab.on{color:#f0b90b;border-bottom-color:#f0b90b;background:#131722}
 .loader{display:inline-block;width:11px;height:11px;border:2px solid #2a2e39;border-top-color:#f0b90b;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:5px}
 @keyframes spin{to{transform:rotate(360deg)}}
-#worldMap{width:100%;height:300px;background:#0a0d11;border:1px solid #1e2329;border-radius:6px;position:relative;overflow:hidden}
-#worldMap svg{width:100%;height:100%;display:block}
-.mapDot{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;animation:mapPulse 2s infinite}
-@keyframes mapPulse{0%{box-shadow:0 0 0 0 rgba(240,185,11,.7)}70%{box-shadow:0 0 0 14px rgba(240,185,11,0)}100%{box-shadow:0 0 0 0 rgba(240,185,11,0)}}
 .whaleItem{display:flex;flex-direction:column;gap:3px;padding:7px 0;border-bottom:1px solid #1a1f2b;font-size:11px}
 .whaleItem:last-child{border-bottom:none}
 .whaleItem .whaleTop{display:flex;justify-content:space-between;align-items:center}
@@ -192,6 +188,10 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
 .patItem .patStat.breakout{color:#26a69a}
 .patItem .patStat.forming{color:#f0b90b}
 .patItem .patStat.broken{color:#ef5350}
+.patItem .patTF{font-size:10px;color:#f0b90b;font-weight:700;background:rgba(240,185,11,.12);padding:2px 6px;border-radius:3px}
+#scanProgress{height:8px;background:#1e2329;border-radius:4px;overflow:hidden;margin-bottom:8px;display:none}
+#scanProgress.on{display:block}
+#scanProgress .fill{height:100%;background:linear-gradient(90deg,#26a69a,#f0b90b);width:0%;transition:width .2s}
 @media(max-width:600px){
   #symName{font-size:13px}
   #priceMain{font-size:15px}
@@ -226,11 +226,8 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
       <button class="tf" data-tf="1h">1h</button>
       <button class="tf" data-tf="2h">2h</button>
       <button class="tf" data-tf="4h">4h</button>
-      <button class="tf" data-tf="6h">6h</button>
       <button class="tf" data-tf="8h">8h</button>
-      <button class="tf" data-tf="12h">12h</button>
       <button class="tf" data-tf="1d">1d</button>
-      <button class="tf" data-tf="3d">3d</button>
       <button class="tf" data-tf="1w">1w</button>
     </div>
   </div>
@@ -271,16 +268,18 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
       </div>
       <div class="pane" id="p-patterns">
         <div class="card">
-          <h4>◆ W / M Pattern Scanner (50 coins)</h4>
+          <h4>◆ W / M Pattern Scanner — ALL TIMEFRAMES</h4>
           <div style="color:#848e9c;font-size:10px;margin-bottom:8px;line-height:1.5">
-            <b style="color:#26a69a">W bottom</b> = bullish reversal — two lows at similar price, breakout above neckline.<br>
-            <b style="color:#ef5350">M top</b> = bearish reversal — two highs at similar price, breakdown below neckline.
+            <b style="color:#26a69a">W bottom</b> = bullish reversal (two lows + breakout above neckline).<br>
+            <b style="color:#ef5350">M top</b> = bearish reversal (two highs + breakdown below neckline).<br>
+            <b>Also finds: trendline breaks + trendline acting as support/resistance.</b>
           </div>
+          <div id="scanProgress"><div class="fill" id="scanFill"></div></div>
           <div style="margin-bottom:8px">
-            <button class="btn primary" onclick="scanPatterns()">SCAN NOW</button>
-            <button class="btn" onclick="scanPatternsLive()">CONTINUOUS SCAN</button>
+            <button class="btn primary" onclick="scanPatternsFull()">SCAN ALL COINS × ALL TIMEFRAMES</button>
+            <button class="btn" onclick="stopPatternScan()">STOP</button>
           </div>
-          <div id="patternsOut"><div style="color:#848e9c;font-size:11px;padding:8px">Tap SCAN to find W/M patterns across 50 coins.</div></div>
+          <div id="patternsOut"><div style="color:#848e9c;font-size:11px;padding:8px">Tap SCAN to run full scan.</div></div>
         </div>
       </div>
       <div class="pane" id="p-liqmap">
@@ -293,24 +292,13 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
       <div class="pane" id="p-whales">
         <div class="card">
           <h4>◆ Live Whale Transactions</h4>
-          <div style="color:#848e9c;font-size:10px;margin-bottom:6px">Large transactions across major blockchains.</div>
           <div id="whaleFeed"><div style="padding:8px;color:#848e9c;font-size:11px"><span class="loader"></span>Loading…</div></div>
         </div>
         <div class="card"><h4>◆ Whale Flow Summary</h4><div id="whaleSummary"></div></div>
       </div>
       <div class="pane" id="p-etf">
-        <div class="card">
-          <h4>◆ US Spot ETF Flows</h4>
-          <div id="etfList"><div style="padding:8px;color:#848e9c;font-size:11px"><span class="loader"></span>Loading…</div></div>
-        </div>
+        <div class="card"><h4>◆ US Spot ETF Flows</h4><div id="etfList"></div></div>
         <div class="card"><h4>◆ Total Net Flow</h4><div id="etfTotal"></div></div>
-      </div>
-      <div class="pane" id="p-map">
-        <div class="card">
-          <h4>◆ Global Whale Activity Map</h4>
-          <div id="worldMap"></div>
-        </div>
-        <div class="card"><h4>◆ Global Market Stats</h4><div id="globalStats"></div></div>
       </div>
       <div class="pane" id="p-orderflow">
         <div class="card"><h4>Buy / Sell Pressure</h4><div id="ofSummary"></div></div>
@@ -364,10 +352,7 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
           </div>
           <div style="color:#848e9c;font-size:10px;margin-top:6px">Auto-scans every 60 seconds.</div>
         </div>
-        <div class="card">
-          <h4>◆ Live Signal Feed</h4>
-          <div id="signalFeed"><div style="color:#848e9c;font-size:11px;padding:8px">Loading…</div></div>
-        </div>
+        <div class="card"><h4>◆ Live Signal Feed</h4><div id="signalFeed"></div></div>
       </div>
       <div class="pane" id="p-alerts">
         <div class="card">
@@ -387,7 +372,6 @@ html,body{height:100%;background:#0b0e11;color:#eaecef;font-family:-apple-system
     <button class="tab" data-t="liqmap">LIQ MAP</button>
     <button class="tab" data-t="whales">WHALES</button>
     <button class="tab" data-t="etf">ETF</button>
-    <button class="tab" data-t="map">MAP</button>
     <button class="tab" data-t="orderflow">ORDER FLOW</button>
     <button class="tab" data-t="smc">SMC</button>
     <button class="tab" data-t="ict">ICT</button>
@@ -429,7 +413,8 @@ const COINS = [
   ["SNXUSDT","SNX"],["ENSUSDT","ENS"]
 ];
 
-const TF_SECONDS = {"1m":60,"3m":180,"5m":300,"15m":900,"30m":1800,"1h":3600,"2h":7200,"4h":14400,"6h":21600,"8h":28800,"12h":43200,"1d":86400,"3d":259200,"1w":604800};
+const TF_SECONDS = {"1m":60,"3m":180,"5m":300,"15m":900,"30m":1800,"1h":3600,"2h":7200,"4h":14400,"8h":28800,"1d":86400,"1w":604800};
+const ALL_TFS = ["1m","3m","5m","15m","30m","1h","2h","4h","8h","1d","1w"];
 
 let currentSym = 'BTCUSDT', currentName = 'BTC', currentTF = '5m';
 let candles = [], klineWS = null, tickerWS = null, futCvdWS = null, spotAggWS = null, liqWS = null;
@@ -457,9 +442,40 @@ function fmtUSD(n){
   return '$'+n.toFixed(2);
 }
 function setStatus(m){ $('status').textContent = m; }
-function tfBucket(t){ return Math.floor(t/TF_SECONDS[currentTF])*TF_SECONDS[currentTF]; }
-function nowStr(){ const d = new Date(); return d.toLocaleString(); }
 
+/* ============================================================
+   DATA SOURCE — Binance with multi-host fallback
+   ============================================================ */
+const BINANCE_HOSTS = [
+  'https://data-api.binance.vision',
+  'https://api1.binance.com',
+  'https://api2.binance.com',
+  'https://api3.binance.com',
+  'https://api.binance.com'
+];
+let binanceHost = BINANCE_HOSTS[0];
+
+async function fetchKlines(sym,tf,limit){
+  for(let attempt = 0; attempt < BINANCE_HOSTS.length; attempt++){
+    const host = BINANCE_HOSTS[attempt];
+    try{
+      const url = host + '/api/v3/klines?symbol=' + sym + '&interval=' + tf + '&limit=' + (limit||500);
+      const r = await fetch(url);
+      if(!r.ok) continue;
+      const raw = await r.json();
+      if(!Array.isArray(raw)) continue;
+      binanceHost = host;
+      return raw.map(k=>({time:Math.floor(k[0]/1000),open:+k[1],high:+k[2],low:+k[3],close:+k[4],volume:+k[5]}));
+    }catch(e){}
+  }
+  throw new Error('All Binance endpoints failed');
+}
+
+function tfBucket(t){ return Math.floor(t/TF_SECONDS[currentTF])*TF_SECONDS[currentTF]; }
+
+/* ============================================================
+   CHART
+   ============================================================ */
 const chartEl = $('mainChart');
 const baseOpts = {
   layout:{background:{color:'#0b0e11'},textColor:'#d1d4dc',fontSize:10},
@@ -468,25 +484,49 @@ const baseOpts = {
   timeScale:{borderColor:'#1e2329',timeVisible:true,secondsVisible:false,rightOffset:4,barSpacing:6},
   crosshair:{mode:0}
 };
-const chart = LightweightCharts.createChart(chartEl, {...baseOpts, width:chartEl.clientWidth, height:chartEl.clientHeight});
-const candleSeries = chart.addCandlestickSeries({upColor:'#26a69a',downColor:'#ef5350',borderUpColor:'#26a69a',borderDownColor:'#ef5350',wickUpColor:'#26a69a',wickDownColor:'#ef5350'});
-const ema20Series = chart.addLineSeries({color:'#2962ff',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
-const ema50Series = chart.addLineSeries({color:'#ff9800',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
-const ema200Series = chart.addLineSeries({color:'#9c27b0',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
-const vwapSeries = chart.addLineSeries({color:'#00bcd4',lineWidth:1,lineStyle:3,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
-const volSeries = chart.addHistogramSeries({priceFormat:{type:'volume'}, priceScaleId:'v',priceLineVisible:false, lastValueVisible:false});
-chart.priceScale('v').applyOptions({scaleMargins:{top:0.85, bottom:0}});
+let chart, candleSeries, ema20Series, ema50Series, ema200Series, vwapSeries, volSeries;
+
+function initChart(){
+  chart = LightweightCharts.createChart(chartEl, {...baseOpts, width:chartEl.clientWidth||600, height:chartEl.clientHeight||400});
+  candleSeries = chart.addCandlestickSeries({upColor:'#26a69a',downColor:'#ef5350',borderUpColor:'#26a69a',borderDownColor:'#ef5350',wickUpColor:'#26a69a',wickDownColor:'#ef5350'});
+  ema20Series = chart.addLineSeries({color:'#2962ff',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
+  ema50Series = chart.addLineSeries({color:'#ff9800',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
+  ema200Series = chart.addLineSeries({color:'#9c27b0',lineWidth:1,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
+  vwapSeries = chart.addLineSeries({color:'#00bcd4',lineWidth:1,lineStyle:3,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
+  volSeries = chart.addHistogramSeries({priceFormat:{type:'volume'}, priceScaleId:'v',priceLineVisible:false, lastValueVisible:false});
+  chart.priceScale('v').applyOptions({scaleMargins:{top:0.85, bottom:0}});
+  chart.subscribeClick(param=>{
+    if(!liqTapMode || !param || param.point==null) return;
+    try{
+      const price = candleSeries.coordinateToPrice(param.point.y);
+      if(price==null) return;
+      liqPickedPrice = price;
+      renderLiqMap();
+    }catch(e){}
+  });
+}
 
 let chartLines = [];
-function clearChartLines(){ chartLines.forEach(l => { try{ candleSeries.removePriceLine(l); }catch(e){} }); chartLines = []; }
+function clearChartLines(){ if(!candleSeries) return; chartLines.forEach(l => { try{ candleSeries.removePriceLine(l); }catch(e){} }); chartLines = []; }
 function addLine(price, color, title, style){
+  if(!candleSeries) return;
   try{ chartLines.push(candleSeries.createPriceLine({price, color, lineWidth:1, lineStyle: style||2, axisLabelVisible:false, title: title||''})); }catch(e){}
 }
-function resizeCharts(){ const w = chartEl.clientWidth, h = chartEl.clientHeight; if(w>0 && h>0) chart.applyOptions({width:w, height:h}); }
+function resizeCharts(){
+  if(!chart) return;
+  const w = chartEl.clientWidth, h = chartEl.clientHeight;
+  if(w>0 && h>0) chart.applyOptions({width:w, height:h});
+}
 window.addEventListener('resize', resizeCharts);
 window.addEventListener('orientationchange', () => setTimeout(resizeCharts, 250));
-if(window.ResizeObserver){ new ResizeObserver(resizeCharts).observe(chartEl); }
+if(window.ResizeObserver){
+  const ro = new ResizeObserver(resizeCharts);
+  ro.observe(chartEl);
+}
 
+/* ============================================================
+   MATH
+   ============================================================ */
 function ema(v,p){ const o=new Array(v.length).fill(null); if(v.length<p) return o; const k=2/(p+1); let s=0; for(let i=0;i<p;i++) s+=v[i]; let prev=s/p; o[p-1]=prev; for(let i=p;i<v.length;i++){ prev=v[i]*k+prev*(1-k); o[i]=prev; } return o; }
 function sma(v,p){ const o=new Array(v.length).fill(null); let s=0; for(let i=0;i<v.length;i++){ s+=v[i]; if(i>=p) s-=v[i-p]; if(i>=p-1) o[i]=s/p; } return o; }
 function stdev(v,p){ const o=new Array(v.length).fill(null); const m=sma(v,p); for(let i=p-1;i<v.length;i++){ let s=0; for(let j=i-p+1;j<=i;j++) s+=Math.pow(v[j]-m[i],2); o[i]=Math.sqrt(s/p); } return o; }
@@ -499,6 +539,9 @@ function supertrend(c,p,m){ p=p||10;m=m||3; const atr=atrCalc(c,p); const dir=ne
 function ichimoku(c){ const n=c.length; const tenkan=new Array(n).fill(null), kijun=new Array(n).fill(null), senkouA=new Array(n).fill(null), senkouB=new Array(n).fill(null); function hl(period,end){ let hh=-Infinity,ll=Infinity; for(let i=Math.max(0,end-period+1);i<=end;i++){ if(c[i].high>hh) hh=c[i].high; if(c[i].low<ll) ll=c[i].low; } return (hh+ll)/2; } for(let i=0;i<n;i++){ if(i>=8) tenkan[i]=hl(9,i); if(i>=25) kijun[i]=hl(26,i); if(i>=51) senkouB[i]=hl(52,i); if(tenkan[i]!=null&&kijun[i]!=null) senkouA[i]=(tenkan[i]+kijun[i])/2; } return {tenkan,kijun,senkouA,senkouB}; }
 function pivotPoints(c){ const prev=c[c.length-2]||c[c.length-1]; const H=prev.high,L=prev.low,C=prev.close; const P=(H+L+C)/3; return {P,R1:2*P-L,R2:P+(H-L),R3:H+2*(P-L),S1:2*P-H,S2:P-(H-L),S3:L-2*(H-P),H,L,C}; }
 
+/* ============================================================
+   PATTERN / STRUCTURE DETECTION
+   ============================================================ */
 function detectSwings(c,p){
   p=p||5;
   const highs=[],lows=[];
@@ -554,13 +597,10 @@ function detectTrendlines(c){
   return results;
 }
 
-/* Detect broken trendline acting as support/resistance (retest) */
 function detectTrendlineRetest(c){
   const {highs, lows} = detectSwings(c, 5);
   const results = [];
   const currentPrice = c[c.length-1].close;
-
-  /* Uptrend line that broke down and is now acting as resistance on retest */
   if(lows.length >= 3){
     const l1 = lows[lows.length-3], l2 = lows[lows.length-2];
     if(l2.price > l1.price){
@@ -591,8 +631,6 @@ function detectTrendlineRetest(c){
       }
     }
   }
-
-  /* Downtrend line that broke up and is now acting as support on retest */
   if(highs.length >= 3){
     const h1 = highs[highs.length-3], h2 = highs[highs.length-2];
     if(h2.price < h1.price){
@@ -626,11 +664,6 @@ function detectTrendlineRetest(c){
   return results;
 }
 
-/* ============================================================
-   W BOTTOM / M TOP PATTERN DETECTION
-   ============================================================ */
-
-/* W bottom: two similar lows with a peak between, price breaking above neckline = bullish */
 function detectWBottom(c){
   const {lows} = detectSwings(c, 5);
   if(lows.length < 2) return null;
@@ -650,23 +683,11 @@ function detectWBottom(c){
     const age = c.length - 1 - l2.i;
     if(age > 120) continue;
     if(!breakout && !forming) continue;
-    return {
-      pattern: 'W',
-      dir: 'up',
-      low1: l1.price, low2: l2.price,
-      neckline: peakPrice,
-      breakout: breakout,
-      forming: forming,
-      currentPrice: currentPrice,
-      formedAt: c[l2.i].time,
-      age: age,
-      strength: ((currentPrice - l1.price) / l1.price * 100).toFixed(2)
-    };
+    return {pattern:'W',dir:'up',low1:l1.price,low2:l2.price,neckline:peakPrice,breakout:breakout,forming:forming,currentPrice:currentPrice,formedAt:c[l2.i].time,age:age,strength:((currentPrice - l1.price)/l1.price*100).toFixed(2)};
   }
   return null;
 }
 
-/* M top: two similar highs with a valley between, price breaking below neckline = bearish */
 function detectMTop(c){
   const {highs} = detectSwings(c, 5);
   if(highs.length < 2) return null;
@@ -686,69 +707,78 @@ function detectMTop(c){
     const age = c.length - 1 - h2.i;
     if(age > 120) continue;
     if(!breakdown && !forming) continue;
-    return {
-      pattern: 'M',
-      dir: 'down',
-      high1: h1.price, high2: h2.price,
-      neckline: valleyPrice,
-      breakout: breakdown,
-      forming: forming,
-      currentPrice: currentPrice,
-      formedAt: c[h2.i].time,
-      age: age,
-      strength: ((h1.price - currentPrice) / h1.price * 100).toFixed(2)
-    };
+    return {pattern:'M',dir:'down',high1:h1.price,high2:h2.price,neckline:valleyPrice,breakout:breakdown,forming:forming,currentPrice:currentPrice,formedAt:c[h2.i].time,age:age,strength:((h1.price - currentPrice)/h1.price*100).toFixed(2)};
   }
   return null;
 }
 
-/* Scan all 50 coins for W/M patterns */
-let patternScanInterval = null;
-async function scanPatterns(){
-  const out = $('patternsOut');
-  if(!out) return;
-  out.innerHTML = '<div style="padding:10px;color:#848e9c"><span class="loader"></span>Scanning 50 coins for W/M patterns…</div>';
-  const results = [];
-  for(const [sym, name] of COINS){
-    try{
-      const k = await fetchKlines(sym, currentTF, 200);
-      if(k.length < 40) continue;
-      const w = detectWBottom(k);
-      const m = detectMTop(k);
-      if(w) results.push({sym, name, pattern: 'W', data: w});
-      if(m) results.push({sym, name, pattern: 'M', data: m});
-    }catch(e){}
-    await new Promise(r => setTimeout(r, 40));
-  }
-  if(!results.length){
-    out.innerHTML = '<div style="padding:10px;color:#848e9c;font-size:11px">No W/M patterns found on this timeframe. Try a larger timeframe like 4h or 1d.</div>';
-    return;
-  }
-  out.innerHTML = results.map(r => {
-    const stat = r.data.breakout ? 'BREAKOUT CONFIRMED' : 'FORMING — not yet broken';
-    const statClass = r.data.breakout ? (r.pattern === 'W' ? 'breakout' : 'broken') : 'forming';
-    const date = new Date(r.data.formedAt * 1000).toLocaleString();
-    return '<div class="patItem ' + (r.pattern === 'W' ? 'w' : 'm') + '" onclick="selectSymbol(\'' + r.sym + '\',\'' + r.name + '\')">' +
-      '<div class="patTop"><span class="patCoin">' + r.name + '/USDT</span><span class="patType">' + r.pattern + '</span></div>' +
-      '<div class="patMeta">Neckline: ' + fmt(r.data.neckline) + ' · Current: ' + fmt(r.data.currentPrice) + '</div>' +
-      '<div class="patMeta">Formed: ' + date + ' · ' + r.data.age + ' candles ago</div>' +
-      '<div class="patStat ' + statClass + '">' + stat + ' · move ' + r.data.strength + '%</div>' +
-      '</div>';
-  }).join('');
-  setStatus('Pattern scan done · ' + results.length + ' patterns found');
+function detectSupportResistance(c){
+  const {highs,lows}=detectSwings(c,8);
+  const allLevels = [...highs.map(h=>({price:h.price,type:'R'})),...lows.map(l=>({price:l.price,type:'S'}))];
+  const clusters = [];
+  allLevels.forEach(lvl => {
+    let found = false;
+    for(const cl of clusters){
+      if(Math.abs(cl.price - lvl.price) / cl.price < 0.003){
+        cl.price = (cl.price * cl.touches + lvl.price) / (cl.touches + 1);
+        cl.touches++;
+        found = true;
+        break;
+      }
+    }
+    if(!found) clusters.push({price:lvl.price, touches:1, type:lvl.type});
+  });
+  clusters.sort((a,b) => b.touches - a.touches);
+  return clusters.slice(0, 8);
 }
 
-function scanPatternsLive(){
-  if(patternScanInterval){
-    clearInterval(patternScanInterval);
-    patternScanInterval = null;
-    setStatus('Pattern scan stopped');
-    return;
-  }
-  scanPatterns();
-  patternScanInterval = setInterval(scanPatterns, 120000);
-  setStatus('Continuous pattern scan active (every 2 min)');
+function detectLiquidityGrabs(c){
+  const {highs,lows}=detectSwings(c,5);
+  const grabs = [];
+  highs.slice(-20).forEach(h => {
+    for(let i=h.i+1;i<Math.min(c.length, h.i+15);i++){
+      const body = Math.abs(c[i].close - c[i].open);
+      const upperWick = c[i].high - Math.max(c[i].open, c[i].close);
+      if(c[i].high > h.price && c[i].close < h.price && upperWick > body * 2){
+        grabs.push({time:c[i].time, price:h.price, dir:'up', type:'Bearish grab'});
+        break;
+      }
+    }
+  });
+  lows.slice(-20).forEach(l => {
+    for(let i=l.i+1;i<Math.min(c.length, l.i+15);i++){
+      const body = Math.abs(c[i].close - c[i].open);
+      const lowerWick = Math.min(c[i].open, c[i].close) - c[i].low;
+      if(c[i].low < l.price && c[i].close > l.price && lowerWick > body * 2){
+        grabs.push({time:c[i].time, price:l.price, dir:'down', type:'Bullish grab'});
+        break;
+      }
+    }
+  });
+  return grabs.slice(-6);
 }
+
+function detectOrderBlocks(c,structure){
+  const obs=[];
+  structure.slice(-6).forEach(ev=>{
+    if(ev.dir==='up'){ for(let i=ev.i;i>=Math.max(0,ev.i-15);i--){ if(c[i].close<c[i].open){ obs.push({dir:'bull',high:c[i].high,low:c[i].low}); break; } } }
+    else { for(let i=ev.i;i>=Math.max(0,ev.i-15);i--){ if(c[i].close>c[i].open){ obs.push({dir:'bear',high:c[i].high,low:c[i].low}); break; } } }
+  });
+  return obs;
+}
+function detectFVGs(c){
+  const fvgs=[];
+  for(let i=2;i<c.length;i++){
+    if(c[i-2].high<c[i].low) fvgs.push({dir:'bull',high:c[i].low,low:c[i-2].high});
+    if(c[i-2].low>c[i].high) fvgs.push({dir:'bear',high:c[i-2].low,low:c[i].high});
+  }
+  return fvgs.slice(-10);
+}
+
+function wyckoffPhase(c){ if(c.length<60) return {phase:'—',avgVol:1,recentVol:1}; const sl=c.slice(-60); const closes=sl.map(x=>x.close); const vols=sl.map(x=>x.volume); const avgVol=vols.reduce((a,b)=>a+b,0)/vols.length; const recentVol=vols.slice(-5).reduce((a,b)=>a+b,0)/5; const last20=Math.max(...closes.slice(-20))-Math.min(...closes.slice(-20)); const prior40=Math.max(...closes.slice(-60,-20))-Math.min(...closes.slice(-60,-20)); const contr=last20<prior40*0.6, exp=last20>prior40*1.4; const trend=ema(closes,20)[closes.length-1]-ema(closes,50)[closes.length-1]; let phase='Unclear'; if(contr&&recentVol<avgVol) phase='Accumulation / Distribution range'; else if(exp&&trend>0) phase='Markup (trend up)'; else if(exp&&trend<0) phase='Markdown (trend down)'; else if(Math.abs(trend)<(Math.max(...closes)-Math.min(...closes))*0.02) phase='Ranging'; else phase=trend>0?'Bullish continuation':'Bearish continuation'; return {phase,avgVol,recentVol}; }
+function crtState(c){ const r=c.slice(-40).map(x=>x.high-x.low); const recent=r.slice(-10).reduce((a,b)=>a+b,0)/10; const prior=r.slice(-30,-10).reduce((a,b)=>a+b,0)/20; if(recent<prior*0.65) return {state:'Contraction',note:'Range compressing'}; if(recent>prior*1.5) return {state:'Expansion',note:'Range expanding'}; return {state:'Normal',note:'Range within normal bounds'}; }
+const SESSIONS = [{name:'Asian',start:0,end:8},{name:'London',start:7,end:16},{name:'NY AM',start:13,end:17},{name:'NY PM',start:17,end:21},{name:'London Close',start:15,end:17}];
+function currentSession(){ const h=new Date().getUTCHours(); for(const s of SESSIONS){ if(h>=s.start&&h<s.end) return s; } return null; }
   
 /* ============================================================
    UI SETUP
@@ -781,7 +811,11 @@ function closeWL(){ $('wlDrawer').classList.remove('on'); }
 function startTicker(){
   if(tickerWS){ try{tickerWS.close();}catch(e){} }
   const streams = COINS.map(c=>c[0].toLowerCase()+'@miniTicker').join('/');
-  tickerWS = new WebSocket('wss://stream.binance.com:9443/stream?streams='+streams);
+  try{
+    tickerWS = new WebSocket('wss://data-stream.binance.vision/stream?streams='+streams);
+  }catch(e){
+    tickerWS = new WebSocket('wss://stream.binance.com:9443/stream?streams='+streams);
+  }
   tickerWS.onmessage = e => {
     try{
       const m = JSON.parse(e.data).data;
@@ -810,6 +844,9 @@ function startTicker(){
       }
     }catch(err){}
   };
+  tickerWS.onerror = () => {
+    try{ tickerWS = new WebSocket('wss://stream.binance.com:9443/stream?streams='+streams); }catch(e){}
+  };
 }
 
 async function selectSymbol(sym,name){
@@ -826,7 +863,7 @@ async function selectSymbol(sym,name){
   if(spotAggWS){ try{spotAggWS.close();}catch(e){} spotAggWS=null; }
   ofBuckets = {}; spotCvdSeries=[]; spotCvdTotal=0; futCvdSeries=[]; futCvdTotal=0;
   liqPickedPrice = null; clearChartLines();
-  try{ candles = await fetchKlines(sym,currentTF,500); } catch(e){ setStatus('load failed'); return; }
+  try{ candles = await fetchKlines(sym,currentTF,500); } catch(e){ setStatus('load failed — try different coin'); return; }
   if(!candles.length){ setStatus('no data'); return; }
   candles.forEach(c=>{ const range=(c.high-c.low)||1e-9; const buyRatio=(c.close-c.low)/range; const buy=c.volume*buyRatio; ofBuckets[c.time]={buy,sell:c.volume-buy}; });
   redrawAll();
@@ -840,11 +877,12 @@ async function selectSymbol(sym,name){
 }
 
 function redrawAll(){
+  if(!candleSeries) return;
   candleSeries.setData(candles.map(c=>({time:c.time,open:c.open,high:c.high,low:c.low,close:c.close})));
   volSeries.setData(candles.map(c=>({time:c.time,value:c.volume,color:c.close>=c.open?'rgba(38,166,154,.35)':'rgba(239,83,80,.35)'})));
   drawIndicators();
   drawChartLevels();
-  chart.timeScale().fitContent();
+  try{ chart.timeScale().fitContent(); }catch(e){}
   resizeCharts();
 }
 function drawIndicators(){
@@ -872,7 +910,13 @@ function drawChartLevels(){
 }
 
 function startKlineStream(sym){
-  klineWS = new WebSocket('wss://stream.binance.com:9443/ws/'+sym.toLowerCase()+'@kline_'+currentTF);
+  if(klineWS){ try{klineWS.close();}catch(e){} }
+  let wsUrl = 'wss://data-stream.binance.vision/ws/'+sym.toLowerCase()+'@kline_'+currentTF;
+  try{
+    klineWS = new WebSocket(wsUrl);
+  }catch(e){
+    klineWS = new WebSocket('wss://stream.binance.com:9443/ws/'+sym.toLowerCase()+'@kline_'+currentTF);
+  }
   klineWS.onmessage = e => {
     try{
       const k = JSON.parse(e.data).k;
@@ -884,6 +928,9 @@ function startKlineStream(sym){
       drawIndicators();
       runAllPanes();
     }catch(err){}
+  };
+  klineWS.onerror = () => {
+    try{ klineWS = new WebSocket('wss://stream.binance.com:9443/ws/'+sym.toLowerCase()+'@kline_'+currentTF); }catch(e){}
   };
 }
 function startSpotAgg(sym){
@@ -963,18 +1010,7 @@ function openTab(name){
   setTimeout(resizeCharts, 50);
   if(name==='whales') fetchWhales();
   if(name==='etf') fetchETF();
-  if(name==='map') { renderWorldMap(); fetchGlobalStats(); }
-  if(name==='patterns') scanPatterns();
 }
-chart.subscribeClick(param=>{
-  if(!liqTapMode || !param || param.point==null) return;
-  try{
-    const price = candleSeries.coordinateToPrice(param.point.y);
-    if(price==null) return;
-    liqPickedPrice = price;
-    renderLiqMap();
-  }catch(e){}
-});
 async function fetchOI(){
   try{ const r = await fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol='+currentSym); const j = await r.json(); const oi = parseFloat(j.openInterest); const cur = tickerData[currentSym]; const px = cur?cur.price:(candles.length?candles[candles.length-1].close:0); oiUSDGlobal = oi*px; } catch(e){ oiUSDGlobal = null; }
   try{ const r = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex?symbol='+currentSym); const j = await r.json(); fundingGlobal = parseFloat(j.lastFundingRate)*100; } catch(e){ fundingGlobal = null; }
@@ -1112,58 +1148,6 @@ async function fetchETF(){
     '<div class="liqRow"><span class="k">Direction</span><span class="v '+(total>=0?'short':'long')+'">'+(total>=0?'NET INFLOW — bullish':'NET OUTFLOW — bearish')+'</span></div>';
 }
 
-const WORLD_PATH = "M200,120 Q210,110 225,115 L240,120 L245,135 L250,150 L260,160 L255,175 L240,180 L225,185 L215,180 L210,165 L205,150 L200,140 Z M400,140 Q410,130 425,135 L440,140 L450,160 L445,180 L435,195 L420,200 L410,190 L405,175 L400,160 Z M520,110 Q530,105 540,110 L545,130 L540,155 L535,175 L530,190 L525,205 L520,210 L515,195 L515,175 L520,155 L518,135 Z M600,130 Q615,120 630,130 L645,150 L650,175 L655,205 L650,240 L640,265 L625,275 L615,270 L605,250 L598,225 L595,195 L597,165 Z M700,180 Q710,175 725,185 L740,200 L745,220 L740,240 L725,245 L715,235 L708,215 Z M280,280 Q295,275 310,285 L320,300 L318,320 L305,325 L290,320 L282,300 Z M740,290 Q755,285 770,295 L780,310 L778,330 L763,335 L748,330 L738,310 Z M170,210 Q185,205 195,215 L200,235 L195,255 L180,260 L168,250 L163,230 Z";
-let mapLoopStarted = false;
-function renderWorldMap(){
-  const mapEl = $('worldMap');
-  if(!mapEl) return;
-  const svg = '<svg viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg">'+
-    '<rect width="900" height="400" fill="#0a0d11"/>'+
-    '<g stroke="#1e2329" stroke-width="0.5" fill="none">'+
-      Array.from({length:18},(_,i)=>'<line x1="0" y1="'+(i*22)+'" x2="900" y2="'+(i*22)+'"/>').join('')+
-      Array.from({length:40},(_,i)=>'<line x1="'+(i*22)+'" y1="0" x2="'+(i*22)+'" y2="400"/>').join('')+
-    '</g>'+
-    '<path d="'+WORLD_PATH+'" fill="#1a2028" stroke="#2a3546" stroke-width="0.8"/>'+
-    '</svg>';
-  mapEl.innerHTML = svg;
-  const container = document.createElement('div');
-  container.style.cssText = 'position:absolute;inset:0;pointer-events:none';
-  mapEl.appendChild(container);
-  const dots = [{x:245,y:145},{x:445,y:170},{x:630,y:180},{x:780,y:300},{x:315,y:300}];
-  function spawnDot(){
-    const dot = document.createElement('div');
-    dot.className = 'mapDot';
-    const d = dots[Math.floor(Math.random()*dots.length)];
-    dot.style.left = (d.x/900*100)+'%';
-    dot.style.top = (d.y/400*100)+'%';
-    const amt = Math.random()*50000000 + 1000000;
-    const color = amt > 20000000 ? '#ef5350' : amt > 5000000 ? '#f0b90b' : '#26a69a';
-    dot.style.background = color;
-    dot.style.boxShadow = '0 0 0 0 '+color;
-    container.appendChild(dot);
-    setTimeout(()=>{ try{ dot.remove(); }catch(e){} }, 8000);
-  }
-  for(let i=0;i<3;i++) setTimeout(spawnDot, i*600);
-  if(!mapLoopStarted){
-    mapLoopStarted = true;
-    setInterval(()=>{ if(activeTab === 'map') spawnDot(); }, 2500);
-  }
-}
-async function fetchGlobalStats(){
-  const el = $('globalStats');
-  if(!el) return;
-  try{
-    const r = await fetch('https://api.coingecko.com/api/v3/global');
-    const j = await r.json();
-    el.innerHTML =
-      '<div class="liqRow"><span class="k">Total market cap</span><span class="v">'+fmtUSD(j.data.total_market_cap.usd)+'</span></div>'+
-      '<div class="liqRow"><span class="k">24h volume</span><span class="v">'+fmtUSD(j.data.total_volume.usd)+'</span></div>'+
-      '<div class="liqRow"><span class="k">24h change</span><span class="v '+(j.data.market_cap_change_percentage_24h_usd>=0?'short':'long')+'">'+j.data.market_cap_change_percentage_24h_usd.toFixed(2)+'%</span></div>'+
-      '<div class="liqRow"><span class="k">BTC dominance</span><span class="v">'+j.data.market_cap_percentage.btc.toFixed(2)+'%</span></div>'+
-      '<div class="liqRow"><span class="k">ETH dominance</span><span class="v">'+j.data.market_cap_percentage.eth.toFixed(2)+'%</span></div>';
-  } catch(e){ el.innerHTML = '<div style="color:#848e9c;font-size:11px">Unavailable.</div>'; }
-}
-
 document.querySelectorAll('.tab').forEach(t=>{
   t.onclick = () => {
     const name = t.dataset.t;
@@ -1213,9 +1197,6 @@ function vibrate(pattern){
   try{ if(navigator.vibrate) navigator.vibrate(pattern); }catch(e){}
 }
 
-/* ============================================================
-   SIGNAL ENGINE
-   ============================================================ */
 let signalLog = [];
 let knownEvents = new Set();
 let signalScanTimer = null;
@@ -1401,6 +1382,7 @@ function startSignalEngine(){
   signalScanTimer = setInterval(() => runSignalScan(false), 60000);
 }
 function drawTrendlinesOnChart(){
+  if(!candleSeries) return;
   tlLines.forEach(l => { try{ candleSeries.removePriceLine(l); }catch(e){} });
   tlLines = [];
   if(!sigTrendOn || candles.length < 30) return;
@@ -1417,6 +1399,184 @@ function drawTrendlinesOnChart(){
   });
 }
 
+/* ============================================================
+   FULL MULTI-TIMEFRAME SCANNER
+   ============================================================ */
+let patternScanAbort = false;
+async function scanPatternsFull(){
+  const out = $('patternsOut');
+  const prog = $('scanProgress');
+  const fill = $('scanFill');
+  if(!out) return;
+  patternScanAbort = false;
+  prog.classList.add('on');
+  fill.style.width = '0%';
+  out.innerHTML = '<div style="padding:10px;color:#848e9c"><span class="loader"></span>Scanning 50 coins × 11 timeframes (' + (COINS.length * ALL_TFS.length) + ' total checks)…</div>';
+
+  const results = [];
+  const totalChecks = COINS.length * ALL_TFS.length;
+  let done = 0;
+
+  for(const tf of ALL_TFS){
+    for(const [sym, name] of COINS){
+      if(patternScanAbort){ setStatus('scan stopped'); prog.classList.remove('on'); break; }
+      try{
+        const k = await fetchKlines(sym, tf, 200);
+        if(k.length < 40) { done++; continue; }
+
+        const w = detectWBottom(k);
+        if(w) results.push({ sym, name, tf, pattern: 'W', data: w, type: 'W' });
+        const m = detectMTop(k);
+        if(m) results.push({ sym, name, tf, pattern: 'M', data: m, type: 'M' });
+
+        const tls = detectTrendlines(k);
+        tls.forEach(tl => {
+          if(tl.isBreak){
+            results.push({
+              sym, name, tf,
+              pattern: 'TL',
+              type: tl.dir === 'up' ? 'TL-BREAK-BEAR' : 'TL-BREAK-BULL',
+              data: {
+                linePrice: tl.projected,
+                dir: tl.dir === 'up' ? 'down' : 'up',
+                note: tl.type + ' broken'
+              }
+            });
+          } else if(tl.near){
+            results.push({
+              sym, name, tf,
+              pattern: 'TL-NEAR',
+              type: 'TL-NEAR',
+              data: {
+                linePrice: tl.projected,
+                dir: tl.dir,
+                note: 'Price approaching ' + tl.type
+              }
+            });
+          }
+        });
+
+        const retests = detectTrendlineRetest(k);
+        retests.forEach(r => {
+          results.push({
+            sym, name, tf,
+            pattern: 'RETEST',
+            type: 'RETEST',
+            data: {
+              linePrice: r.linePrice,
+              dir: r.dir,
+              note: r.type + ' — ' + r.role
+            }
+          });
+        });
+      }catch(e){}
+      done++;
+      const pct = (done / totalChecks) * 100;
+      fill.style.width = pct.toFixed(1) + '%';
+      if(done % 20 === 0){
+        out.innerHTML = '<div style="padding:10px;color:#848e9c"><span class="loader"></span>Scanning… ' + done + '/' + totalChecks + ' · ' + results.length + ' found so far</div>';
+      }
+    }
+    if(patternScanAbort) break;
+  }
+
+  prog.classList.remove('on');
+  fill.style.width = '0%';
+
+  if(!results.length){
+    out.innerHTML = '<div style="padding:10px;color:#848e9c;font-size:11px">No patterns found across any coin or timeframe.</div>';
+    setStatus('Scan complete · 0 patterns');
+    return;
+  }
+
+  /* Sort: breakouts first, then forming */
+  results.sort((a,b) => {
+    const aBr = a.data.breakout ? 1 : 0;
+    const bBr = b.data.breakout ? 1 : 0;
+    return bBr - aBr;
+  });
+
+  let html = '';
+  /* Group W patterns */
+  const wResults = results.filter(r => r.pattern === 'W');
+  const mResults = results.filter(r => r.pattern === 'M');
+  const tlBreakResults = results.filter(r => r.pattern === 'TL');
+  const tlNearResults = results.filter(r => r.pattern === 'TL-NEAR');
+  const retestResults = results.filter(r => r.pattern === 'RETEST');
+
+  if(wResults.length){
+    html += '<div style="color:#26a69a;font-weight:700;font-size:12px;padding:8px 0 4px">◆ W BOTTOMS (' + wResults.length + ')</div>';
+    html += wResults.map(r => renderPatternItem(r, 'w')).join('');
+  }
+  if(mResults.length){
+    html += '<div style="color:#ef5350;font-weight:700;font-size:12px;padding:12px 0 4px">◆ M TOPS (' + mResults.length + ')</div>';
+    html += mResults.map(r => renderPatternItem(r, 'm')).join('');
+  }
+  if(tlBreakResults.length){
+    html += '<div style="color:#f0b90b;font-weight:700;font-size:12px;padding:12px 0 4px">◆ TRENDLINE BREAKS (' + tlBreakResults.length + ')</div>';
+    html += tlBreakResults.map(r => {
+      const dirClass = r.data.dir === 'up' ? 'w' : 'm';
+      return '<div class="patItem ' + dirClass + '" onclick="selectSymbol(\'' + r.sym + '\',\'' + r.name + '\');switchTF(\'' + r.tf + '\')">' +
+        '<div class="patTop"><span class="patCoin">' + r.name + '</span><span class="patType">' + (r.data.dir === 'up' ? 'BULL TL' : 'BEAR TL') + '</span></div>' +
+        '<div class="patMeta"><span class="patTF">' + r.tf + '</span> ' + r.data.note + ' @ ' + fmt(r.data.linePrice) + '</div>' +
+        '</div>';
+    }).join('');
+  }
+  if(tlNearResults.length){
+    html += '<div style="color:#f0b90b;font-weight:700;font-size:12px;padding:12px 0 4px">◆ TRENDLINE NEAR (price approaching) (' + tlNearResults.length + ')</div>';
+    html += tlNearResults.map(r => {
+      return '<div class="patItem" onclick="selectSymbol(\'' + r.sym + '\',\'' + r.name + '\');switchTF(\'' + r.tf + '\')">' +
+        '<div class="patTop"><span class="patCoin">' + r.name + '</span><span class="patType" style="background:rgba(240,185,11,.2);color:#f0b90b">NEAR</span></div>' +
+        '<div class="patMeta"><span class="patTF">' + r.tf + '</span> ' + r.data.note + ' @ ' + fmt(r.data.linePrice) + '</div>' +
+        '</div>';
+    }).join('');
+  }
+  if(retestResults.length){
+    html += '<div style="color:#2962ff;font-weight:700;font-size:12px;padding:12px 0 4px">◆ TRENDLINE RETESTS (' + retestResults.length + ')</div>';
+    html += retestResults.map(r => {
+      const dirClass = r.data.dir === 'up' ? 'w' : 'm';
+      return '<div class="patItem ' + dirClass + '" onclick="selectSymbol(\'' + r.sym + '\',\'' + r.name + '\');switchTF(\'' + r.tf + '\')">' +
+        '<div class="patTop"><span class="patCoin">' + r.name + '</span><span class="patType" style="background:rgba(41,98,255,.2);color:#2962ff">RETEST</span></div>' +
+        '<div class="patMeta"><span class="patTF">' + r.tf + '</span> ' + r.data.note + ' @ ' + fmt(r.data.linePrice) + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  out.innerHTML = html;
+  setStatus('Scan complete · ' + results.length + ' patterns found');
+}
+
+function renderPatternItem(r, cls){
+  const stat = r.data.breakout ? (r.pattern === 'W' ? 'BREAKOUT CONFIRMED' : 'BREAKDOWN CONFIRMED') : 'FORMING';
+  const statClass = r.data.breakout ? (r.pattern === 'W' ? 'breakout' : 'broken') : 'forming';
+  const date = new Date(r.data.formedAt * 1000).toLocaleString();
+  return '<div class="patItem ' + cls + '" onclick="selectSymbol(\'' + r.sym + '\',\'' + r.name + '\');switchTF(\'' + r.tf + '\')">' +
+    '<div class="patTop"><span class="patCoin">' + r.name + '</span><span class="patType">' + r.pattern + '</span></div>' +
+    '<div class="patMeta"><span class="patTF">' + r.tf + '</span> Neckline: ' + fmt(r.data.neckline) + ' · Current: ' + fmt(r.data.currentPrice) + '</div>' +
+    '<div class="patMeta">Formed: ' + date + ' · ' + r.data.age + ' candles ago</div>' +
+    '<div class="patStat ' + statClass + '">' + stat + ' · move ' + r.data.strength + '%</div>' +
+    '</div>';
+}
+
+function switchTF(tf){
+  if(!tf || tf === currentTF) return;
+  currentTF = tf;
+  document.querySelectorAll('.tf').forEach(x => {
+    if(x.dataset.tf === tf) x.classList.add('on');
+    else x.classList.remove('on');
+  });
+  setTimeout(() => selectSymbol(currentSym, currentName), 100);
+}
+function stopPatternScan(){
+  patternScanAbort = true;
+  const prog = $('scanProgress');
+  if(prog) prog.classList.remove('on');
+  setStatus('Scan stopped');
+}
+
+/* ============================================================
+   MAIN ANALYSIS
+   ============================================================ */
 function runAllPanes(){
   if(candles.length<60) return;
   const closes = candles.map(c=>c.close);
@@ -1492,10 +1652,10 @@ function runAllPanes(){
     if(rr.dir === 'up'){ reasons.push({c:'g',t:'Retest',d:rr.type+' — '+rr.role}); bull++; }
     else { reasons.push({c:'r',t:'Retest',d:rr.type+' — '+rr.role}); bear++; }
   });
-  const w = detectWBottom(candles);
-  const mTop = detectMTop(candles);
-  if(w && w.breakout){ reasons.push({c:'g',t:'W Bottom',d:'Bullish W breakout'}); bull++; }
-  if(mTop && mTop.breakout){ reasons.push({c:'r',t:'M Top',d:'Bearish M breakdown'}); bear++; }
+  const wPat = detectWBottom(candles);
+  const mPat = detectMTop(candles);
+  if(wPat && wPat.breakout){ reasons.push({c:'g',t:'W Bottom',d:'Bullish W breakout'}); bull++; }
+  if(mPat && mPat.breakout){ reasons.push({c:'r',t:'M Top',d:'Bearish M breakdown'}); bear++; }
   const grabs = detectLiquidityGrabs(candles);
   if(grabs.length){
     const last = grabs[grabs.length-1];
@@ -1932,6 +2092,7 @@ setInterval(checkAlerts, 2000);
 setInterval(()=>{ if(activeTab==='heatmap') renderHeatmap(); }, 3000);
 
 function boot(){
+  initChart();
   buildDrawer();
   buildTicker();
   startTicker();
@@ -1941,6 +2102,7 @@ function boot(){
   resizeCharts();
   setTimeout(resizeCharts, 300);
   setTimeout(resizeCharts, 1000);
+  setTimeout(resizeCharts, 2000);
   selectSymbol('BTCUSDT','BTC');
   fetchWhales();
   startSignalEngine();
